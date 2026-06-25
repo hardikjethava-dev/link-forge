@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}LinkForge - Analytics Dashboard{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .chart-tabs {
+        display: flex;
+        gap: 6px;
+    }
+    .chart-tab {
+        background: var(--tab-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    .chart-tab:hover {
+        background: var(--tab-hover-bg);
+        color: var(--text-primary);
+    }
+    .chart-tab.active {
+        background: var(--primary-glow);
+        color: var(--primary);
+        border-color: var(--tab-active-border);
+    }
+    .distribution-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 24px;
+        margin-top: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <div>
+        <h1 class="dashboard-title"><i class="fa-solid fa-chart-line"></i> Analytics Dashboard</h1>
+        <p class="dashboard-meta">Real-time metrics compiled at: {{ computed_at }}</p>
+    </div>
+    <div>
+        <a href="{% url 'create_url' %}" class="btn">
+            <i class="fa-solid fa-plus"></i> Shorten Another URL
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fa-solid fa-link"></i>
+        </div>
+        <div class="stat-content">
+            <span class="stat-label">Total Short URLs</span>
+            <span class="stat-value">{{ total_urls }}</span>
+        </div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(16, 185, 129, 0.1); color: var(--success);">
+            <i class="fa-solid fa-arrow-pointer"></i>
+        </div>
+        <div class="stat-content">
+            <span class="stat-label">Total Redirections (Clicks)</span>
+            <span class="stat-value">{{ total_clicks }}</span>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: rgba(245, 158, 11, 0.1); color: var(--warning);">
+            <i class="fa-solid fa-calculator"></i>
+        </div>
+        <div class="stat-content">
+            <span class="stat-label">Average Clicks/Link</span>
+            <span class="stat-value">{{ avg_clicks }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Main Panels -->
+<div class="dashboard-panels">
+    <!-- Click Trends Line Chart -->
+    <div class="panel">
+        <div class="chart-header">
+            <h2 class="panel-title" style="margin-bottom: 0;"><i class="fa-solid fa-wave-square"></i> Traffic Over Time</h2>
+            <div class="chart-tabs">
+                <button class="chart-tab active" data-type="daily">Last 7 Days</button>
+                <button class="chart-tab" data-type="weekly">Last 4 Weeks</button>
+                <button class="chart-tab" data-type="monthly">Last 6 Months</button>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="clicks-trend-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Countries -->
+    <div class="panel">
+        <h2 class="panel-title"><i class="fa-solid fa-globe"></i> Top Countries</h2>
+        <div class="dist-list">
+            {% for c in country_dist %}
+                <div class="dist-item">
+                    <div class="dist-meta">
+                        <span class="dist-name">
+                            <i class="fa-solid fa-map-pin" style="color: var(--text-muted);"></i> {{ c.country }}
+                        </span>
+                        <span class="dist-count">{{ c.count }} clicks</span>
+                    </div>
+                    <div class="dist-bar-bg">
+                        <div class="dist-bar-fill" style="width: {% if total_clicks > 0 %}{% widthratio c.count total_clicks 100 %}{% else %}0{% endif %}%;"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="color: var(--text-muted); text-align: center; padding: 40px 0;">
+                    <i class="fa-solid fa-earth-americas" style="font-size: 32px; margin-bottom: 12px; display: block; opacity: 0.5;"></i>
+                    No geographic data collected yet.
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Row: Top Links & User-Agents -->
+<div class="dashboard-panels">
+    <!-- Top 10 Most Clicked Links -->
+    <div class="panel">
+        <h2 class="panel-title"><i class="fa-solid fa-fire"></i> Most Active Links</h2>
+        <div class="table-wrapper">
+            <table class="custom-table">
+                <thead>
+                    <tr>
+                        <th>Short Code</th>
+                        <th>Original Destination</th>
+                        <th>Clicks</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in top_urls %}
+                        <tr>
+                            <td>
+                                <a href="{{ base_short_url }}{{ item.short_code }}" target="_blank" class="link-code">
+                                    {{ item.short_code }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ item.original_url }}" target="_blank" class="link-original" title="{{ item.original_url }}">
+                                    {{ item.original_url }}
+                                </a>
+                            </td>
+                            <td style="font-weight: 600;">{{ item.click_count }}</td>
+                            <td>{{ item.created_at }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 40px 0;">
+                                No URLs created yet.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tech Stack Distributions (Browsers & OS) -->
+    <div class="panel">
+        <h2 class="panel-title"><i class="fa-solid fa-laptop-code"></i> Visitor Tech Profiles</h2>
+        
+        <div class="dist-list" style="margin-bottom: 30px;">
+            <h3 style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;">Top Browsers</h3>
+            {% for b in browser_dist %}
+                <div class="dist-item" style="margin-bottom: 10px;">
+                    <div class="dist-meta">
+                        <span class="dist-name" style="font-size: 13px;">{{ b.browser }}</span>
+                        <span class="dist-count" style="font-size: 12px;">{{ b.count }} clicks</span>
+                    </div>
+                    <div class="dist-bar-bg" style="height: 6px;">
+                        <div class="dist-bar-fill" style="width: {% if total_clicks > 0 %}{% widthratio b.count total_clicks 100 %}{% else %}0{% endif %}%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="color: var(--text-muted); font-size: 13px;">No browser data.</div>
+            {% endfor %}
+        </div>
+
+        <div class="dist-list">
+            <h3 style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); margin-bottom: 12px;">Top Operating Systems</h3>
+            {% for o in os_dist %}
+                <div class="dist-item" style="margin-bottom: 10px;">
+                    <div class="dist-meta">
+                        <span class="dist-name" style="font-size: 13px;">{{ o.operating_system }}</span>
+                        <span class="dist-count" style="font-size: 12px;">{{ o.count }} clicks</span>
+                    </div>
+                    <div class="dist-bar-bg" style="height: 6px;">
+                        <div class="dist-bar-fill" style="width: {% if total_clicks > 0 %}{% widthratio o.count total_clicks 100 %}{% else %}0{% endif %}%; background: linear-gradient(90deg, #a855f7, #c084fc);"></div>
+                    </div>
+                </div>
+            {% empty %}
+                <div style="color: var(--text-muted); font-size: 13px;">No operating system data.</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Raw Chart Data passed to JS securely via JSON script tags -->
+{{ daily_data|json_script:"daily-data-json" }}
+{{ weekly_data|json_script:"weekly-data-json" }}
+{{ monthly_data|json_script:"monthly-data-json" }}
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}LinkForge - Forge Powerful Short Links{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+    <h1 class="hero-title">Forge Short, <span>Powerful</span> Links</h1>
+    <p class="hero-subtitle">Optimize your links with lightning-fast routing, real-time analytics, and advanced rate limits.</p>
+</section>
+
+<div class="card" style="max-width: 680px; margin: 0 auto;">
+    <form method="post" action="{% url 'create_url' %}" novalidate>
+        {% csrf_token %}
+        
+        <div class="form-group">
+            <label for="id_original_url" class="form-label">Destination URL</label>
+            {{ form.original_url }}
+            {% if form.original_url.errors %}
+                <ul class="error-list">
+                    {% for error in form.original_url.errors %}
+                        <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            <label for="id_custom_code" class="form-label">Custom Alias (Optional)</label>
+            {{ form.custom_code }}
+            {% if form.custom_code.errors %}
+                <ul class="error-list">
+                    {% for error in form.custom_code.errors %}
+                        <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <small style="color: var(--text-muted); font-size: 12px; display: block; margin-top: 6px;">
+                Only letters, numbers, hyphens, and underscores are allowed.
+            </small>
+        </div>
+
+        {% if form.non_field_errors %}
+            <ul class="error-list" style="margin-bottom: 20px;">
+                {% for error in form.non_field_errors %}
+                    <li><i class="fa-solid fa-circle-exclamation"></i> {{ error }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <button type="submit" class="btn btn-full">
+            <i class="fa-solid fa-bolt"></i> Shorten URL
+        </button>
+    </form>
+
+    {% if short_url %}
+        <div class="result-box">
+            <div class="result-header">
+                <span class="result-title">
+                    <i class="fa-solid fa-circle-check"></i> URL Shortened Successfully!
+                </span>
+            </div>
+            <div class="result-url-wrapper">
+                <span class="result-url">{{ absolute_short_url }}</span>
+                <button class="btn btn-copy" id="btn-copy-short-url" data-url="{{ absolute_short_url }}">
+                    <i class="fa-regular fa-copy"></i> Copy
+                </button>
+            </div>
+            <div class="original-url-info">
+                Redirects to: <a href="{{ short_url.original_url }}" target="_blank" class="link-original">{{ short_url.original_url }}</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

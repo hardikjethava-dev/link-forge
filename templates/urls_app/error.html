@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}LinkForge - {{ title }}{% endblock %}
+
+{% block content %}
+<div class="error-page-container card">
+    <div class="error-icon">
+        <i class="fa-solid fa-circle-exclamation"></i>
+    </div>
+    <h1 class="error-title">{{ title }}</h1>
+    <p class="error-msg">{{ message }}</p>
+    
+    <div style="display: flex; gap: 16px; justify-content: center;">
+        <a href="{% url 'create_url' %}" class="btn">
+            <i class="fa-solid fa-home"></i> Go Home
+        </a>
+        <a href="javascript:history.back()" class="btn btn-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Go Back
+        </a>
+    </div>
+</div>
+{% endblock %}

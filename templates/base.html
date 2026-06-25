@@ -1,0 +1,75 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LinkForge - Premium URL Shortener{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom Style System -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.6">
+    
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- Background Glow Effects -->
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+    
+    <header class="header">
+        <div class="container header-container">
+            <a href="{% url 'create_url' %}" class="logo">
+                <i class="fa-solid fa-link-slash logo-icon"></i>
+                <span class="logo-text">Link<span class="accent">Forge</span></span>
+            </a>
+            
+            <nav class="nav">
+                <a href="{% url 'create_url' %}" class="nav-link {% if request.resolver_match.url_name == 'create_url' %}active{% endif %}">
+                    <i class="fa-solid fa-plus-circle"></i> Shorten
+                </a>
+                <a href="{% url 'stats_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'stats_dashboard' %}active{% endif %}">
+                    <i class="fa-solid fa-chart-line"></i> Analytics Dashboard
+                </a>
+                <button id="theme-toggle" class="nav-link theme-toggle-btn" aria-label="Toggle theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-container">
+            <p>&copy; 2026 LinkForge. Built for high performance and scalability.</p>
+            <div class="footer-links">
+                <a href="{% url 'health_check' %}" target="_blank"><i class="fa-solid fa-heartbeat"></i> Health</a>
+                <a href="https://github.com" target="_blank"><i class="fa-brands fa-github"></i> Repository</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Custom Logic System -->
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
